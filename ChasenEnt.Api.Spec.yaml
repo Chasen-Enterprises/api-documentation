@@ -1,0 +1,2677 @@
+---
+openapi: 3.0.1
+info:
+  title: Chasen.Enterprises CRTHub Api
+  contact: {}
+  version: "1.1"
+servers:
+- url: https://chasenenterprises.com/
+security:
+- auth: []
+tags:
+- name: Authentication
+- name: Core Cashflow Generation Functions
+- name: ACIS / CIRT Functions
+- name: Bond Math Functions
+- name: Utility Functions
+paths:
+  /oauth/token:
+    post:
+      tags:
+      - Authentication
+      summary: Get Authentication Token
+      description: "## Overview\n\nThis call authenticates user credentials and returns the authorization token which is used to authorize all requests,\n\n## Response\nThe endpoint returns authorization data in JSON format  \n\n> **access_token** *`string`* - This is the token that is used in the Authorization header for all requests in the CRT API  \n> **token_type** *`string`* - authorization token type (“bearer”) (required by authentication standard)  \n> **expires_in** *`int`* - number of seconds to token expiration  \n> **roles** *`string[]`* - array with all user roles  \n> **.issued** *`datetime`* - server datetime of token issuance  \n> **.expires** *`datetime`* - server datetime of token expiration  \n\n***\n\n## Request"
+      operationId: GetAuthToken
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OAuthTokenRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json;charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+              example:
+                access_token: ExZTgtOGYyYy0wMmZkYjk1NzYyODYiLCJ1bmlxdWVfbmFtZSI6ImFkbWluIiwi....
+                token_type: bearer
+                expires_in: 86399
+                roles: '["AFT_User","Admin","User","DocReader","LDM_User"]'
+                ".issued": Wed, 22 Jan 2020 15:33:00 GMT
+                ".expires": Thu, 23 Jan 2020 15:33:00 GMT
+      deprecated: false
+  /deals:
+    get:
+      tags:
+      - Core Cashflow Generation Functions
+      summary: List all available deals
+      description: "## Overview\n\nThis call gathers all available deals along with basic information about them.\n\n## Response\nList of deals in JSON format. Each deal has the following fields \n\n> **DealName** *`string`*  \n> **IssueDate** *`int`*  \n> **OriginalBalance** *`double`*  \n> **CurrentBalance** *`double`*  \n> **MaturityDate** *`int`*  \n> **FactorDate** *`int`*   \n> **DealFactor** *`double`*    \n\n***"
+      operationId: GetAllAvailableDeals
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailableDeal'
+              example:
+              - DealName: ACIS 2014-1
+                IssueDate: 20131112
+                OriginalBalance: 3.532731663256001E10
+                CurrentBalance: 1.8137608338509995E10
+                MaturityDate: 20231125
+                FactorDate: 20140401
+                DealFactor: 0.5134159643983026
+              - DealName: ACIS 2014-2
+                IssueDate: 20140212
+                OriginalBalance: 3.244067548690001E10
+                CurrentBalance: 1.6303363544170002E10
+                MaturityDate: 20240225
+                FactorDate: 20140630
+                DealFactor: 0.5025593117120365
+      deprecated: false
+  /deals/{dealName}/{settlementDate}:
+    get:
+      tags:
+      - Core Cashflow Generation Functions
+      summary: Get deal details by name and settlement date
+      description: "## Overview\nThis call gets a deal and combines it with an appropriate update files.\n\n\n## Response\nDeal object in JSON format\n\n> **DealName** *`string`*  \n> **SettlementDate** *`int`*  \n> **IssueDate** *`int`*  \n> **FactorDate** *`int`*  \n> **FirstProjectedDate** *`int`*  \n> **FirstPaymentDate** *`int`*  \n> **MaturityDate** *`int`*   \n> **MonthsToMaturity** *`int`*    \n> **CollateralOriginalBalance** *`double`*  \n> **CollateralCurrentBalance** *`double`*  \n> **CollateralLosses** *`double`*   \n> **DealFactor** *`double`*   \n> **Wac** *`double`*  \n> **Wam** *`double`*  \n> **Wala** *`double`*   \n> **EarlyRedemptionPct** *`double`*  \n> **EarlyRedemptionDate** *`int`*   \n> **DatesOfAvailableUpdates** *`int[]`*  \n> **Bonds** *[bond object[]](#52ed037c-36ed-4f31-8301-ed1f3bf43304)*   \n> **ParentDealName** *`string`*  \n\n***"
+      operationId: GetDealDetailsByNameAndSettlementDate
+      parameters:
+      - name: dealName
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: settlementDate
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/Deal'
+      deprecated: false
+  /deals/idByCusip/{cusip}:
+    get:
+      tags:
+      - Utility Functions
+      summary: Get deal and bond names by CUSIP
+      description: "This call returns deal and bond names by the bond's CUSIP.\n\n## Response\n\n> **DealName** *`string`*  \n> **BondName** *`string`*  \n\n***"
+      operationId: GetdealandbondnamesbyCUSIP
+      parameters:
+      - name: cusip
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/DealNameBondName'
+              example:
+                DealName: STACR 2013-DN01
+                BondName: M-2
+      deprecated: false
+  /simulate:
+    post:
+      tags:
+      - Core Cashflow Generation Functions
+      summary: Run simulation
+      description: "## Overview\n\nThis call calculates cash flows for the specified deal and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **UserCollateralCashflow** *[ user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional  \n> **CleanupCall** *`bool`* - Optional bool defining if cleanup call is performed   \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n\n## Response\nCall returns a *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)*.\n\n***"
+      operationId: Simulate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/Simulation'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/acis:
+    post:
+      tags:
+      - ACIS / CIRT Functions
+      summary: Calculate ACIS cashflow and characteristics
+      description: "## Overview\n\nThis call calculates ACIS cashflow and characteristics for the specified deal, bond and settlement date.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **BondName** *`string`* - Bond name  \n> **OwnedFaceAmt** *`int`* - Owned face amount in USD  \n> **Margin** *`double`* - Margin in decimal format  \n> **InterestRate** *`double`* - Interest rate in decimal format  \n> **Cancellation** *`bool`* - Optional bool defining if optional cancellation is performed  \n> **UserCollateralCashflow** *[ user collateral cashflow ](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional  \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format  \n\n## Response\n\n> **ProjectedLosses** *`double`*  \n> **LineMetrics** *[line metrics](#6b9b6f73-22d4-4258-b8db-50a8d5fa487f)*  \n> **Yield** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*  \n> **Wal** *`Nullable<double>`*  \n> **ReductionInLiabilityWindow** *`string`*  \n> **WritedownPct** *`Nullable<double>`*  \n> **FirstLossPeriod** *`double`*  \n> **BondName** *`string`*  \n> **AcisCashflow** *[ACIS cashflow[]](#7b989d75-5065-4ee7-896a-c092ef1bb695)* - List of ACIS cashflow periods    \n> **AcisCashflowTotals** *[AcisCashflowTotals](#c6990ba0-5852-4584-8b32-8843221d0015)* Aggregated ACIS cashflow fields    \n> **CollateralCashflow** *[collateral cashflow[]](#98536e45-1596-458e-979c-ac8fe2abb077)* - List of collateral cash flow periods    \n\n***"
+      operationId: SimulateAcis
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateAcisRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/AcisSimulation'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/cirt:
+    post:
+      tags:
+      - ACIS / CIRT Functions
+      summary: Calculate CIRT cashflow and characteristics
+      description: "## Overview\n\nThis call calculates CIRT cashflow and characteristics for the specified deal and settlement date.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **OwnedFaceAmt** *`int`* - Owned face amount in USD  \n> **Margin** *`double`* - Margin in decimal format  \n> **InterestRate** *`double`* - Interest rate in decimal format  \n> **Cancellation** *`bool`* - Optional bool defining if optional cancellation is performed  \n> **CancellationDate** *`int`* - Optional cancellation date in “YYYYMMDD” format  \n> **UserCollateralCashflow** *[ user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional  \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format  \n\n## Response\n\n> **ProjectedLosses** *`double`*  \n> **LineMetrics** *[line metrics](#6b9b6f73-22d4-4258-b8db-50a8d5fa487f)*  \n> **Yield** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*  \n> **Wal** *`Nullable<double>`*  \n> **LossWindow** *`string`*  \n> **WritedownPct** *`Nullable<double>`*  \n> **FirstLossPeriod** *`int`*  \n> **CirtCashflow** *[CIRT cashflow[]](#588a6ed8-e2f2-464d-8962-4dfbd2a9f274)* - List of CIRT cashflow periods    \n> **CirtCashflowTotals** *[CirtCashflowTotals](#c6990ba0-5852-4584-8b32-8843221d0015)* Aggregated CIRT cashflow fields    \n> **CollateralCashflow** *[collateral cashflow[]](#98536e45-1596-458e-979c-ac8fe2abb077)* - List of collateral cash flow periods    \n\n***"
+      operationId: SimulateCirt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateCirtRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/CirtSimulation'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/portfolio:
+    post:
+      tags:
+      - ACIS / CIRT Functions
+      summary: Calculate ACIS and CIRT portfolio
+      description: "## Overview\n\nThis call calculates portfolio consisting of ACIS and CIRT deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **Entries** *[portfolio simulation input entry[]](#28038923-f04c-40d2-aff3-b1231c5dc3b6)* - List of portfolio input entries\n\n## Response\n\n> **TotalOwnedFaceAmt** *`double`*  \n> **AcisPortfolio** *`object`* - List of collateral cash flow items with each containing:  \n>> **ProjectedLosses** *`double`*  \n>> **TotalPrincipal** *`double`*  \n>> **TotalWriteDown** *`double`*  \n>> **TotalInsurancePremium** *`double`*  \n>> **TotalCollateralAccountChange** *`double`*  \n>> **TotalNetInsuranceCashflow** *`double`*  \n>> **TotalOwnedFaceAmt** *`double`*  \n>> **TotalMargin** *`double`*  \n>> **Yield** *[calculation results](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*  \n>> **LineMetrics** *[line metrics](#6b9b6f73-22d4-4258-b8db-50a8d5fa487f)*  \n>> **TotalCharacteristics** *[characteristics](#7de215f4-b9dd-44d1-ad2d-0ef0f10a97c6)*  \n>> **PortfolioEntries** *[portfolio output entry[]](#74a2c8bc-328d-4b86-85ae-678ec108b8f4)* - List of ACIS portfolio output entries  \n>> **PortfolioCashflow** *[ACIS cashflow[]](#7b989d75-5065-4ee7-896a-c092ef1bb695)* - List of  ACIS portfolio cashflow periods  \n>> **CollateralCashflow** *[collateral cashflow[]](#98536e45-1596-458e-979c-ac8fe2abb077)* - List of collateral cash flow periods    \n\n> **CirtPortfolio** *`object`*  \n>> **ProjectedLosses** *`double`*  \n>> **TotalOwnedFaceAmt** *`double`*  \n>> **TotalMargin** *`double`*  \n>> **Yield** *[calculation results](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*  \n>> **LineMetrics** *[line metrics](#6b9b6f73-22d4-4258-b8db-50a8d5fa487f)*    \n>> **TotalCharacteristics** *[characteristics](#7de215f4-b9dd-44d1-ad2d-0ef0f10a97c6)*  \n>> **PortfolioEntries** *[portfolio input entry[]](#74a2c8bc-328d-4b86-85ae-678ec108b8f4)* - List of CIRT portfolio input entries  \n>> **PortfolioCashflow**  *[CIRT cashflow[]](#588a6ed8-e2f2-464d-8962-4dfbd2a9f274)* - List of CIRT portfolio cashflow periods  \n>> **CollateralCashflow** *[collateral cashflow[]](#98536e45-1596-458e-979c-ac8fe2abb077)* - List of collateral cash flow periods    \n\n***"
+      operationId: SimulatePortfolio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulatePortfolioRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/PortfolioSimulation'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/price:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Calculate bond price
+      description: "## Overview\nThis call calculates bond price for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Yield** *`double[]`* - Yield vector in decimal format  \n> **ReferenceCurve** *`double[]`* - Reference curve vector in decimal format  \n> **Spread** *`double`* - Spread value  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n**NOTICE**: The request body has to contain eihter Yield vector or both Reference Curve vector and Spread.\n\n## Response\n\n> **Price** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)*  \n\n***"
+      operationId: SimulateBondPrice
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondPriceRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BondPriceSimulation'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/price/matrix:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Calculate bond price matrix
+      description: "## Overview\nThis call calculates bond price for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[][]`* -  vector of CPR vectors in decimal format  \n> **Cdr** *`double[][]`* - vector of CDR vectors in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Yield** *`double[]`* - Yield vector in decimal format  \n> **ReferenceCurve** *`double[]`* - Reference curve vector in decimal format  \n> **Spread** *`double`* - Spread value  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n**NOTICE**: The request body has to contain eihter Yield vector or both Reference Curve vector and Spread.\n\n## Response\nThe response body in format of JSON array of arrays of objects. Each object contains the following: \n> **Price** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)* - The CollateralCashflow field is not populated to limit the response size.\n\n***"
+      operationId: SimulateBondPriceMatrix
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondPriceMatrixRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BondPriceMatrix'
+              example:
+              - - Price:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 88.23926770634664
+                  Simulation:
+                    ProjectedLosses: 2.23254328255375E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 8.28903372267848
+                      PrincipalWindow: 65 - 66, 68 - 72, 74 - 78, 80
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Price:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 94.00081688068339
+                  Simulation:
+                    ProjectedLosses: 1.4607018770366058E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 3.806252125980167
+                      PrincipalWindow: 30 - 35, 37 - 46, 48 - 57, 59
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+              - - Price:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 85.9257098558579
+                  Simulation:
+                    ProjectedLosses: 4.3840302978832245E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 10.318454004860184
+                      PrincipalWindow: 93 - 93, 95 - 96, 98 - 99, 10
+                      WritedownPct: 3.7746894070864944E-18
+                      FirstLossPeriod: 0
+                - Price:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 92.80569897488434
+                  Simulation:
+                    ProjectedLosses: 2.881358639113335E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 4.664442703395351
+                      PrincipalWindow: 36 - 40, 42 - 46, 48 - 51, 53
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/yield:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Calculate bond yield
+      description: "## Overview\nThis call calculates bond yield for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Price** *`double`* - Price value  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n\n## Response\n\n> **Yield** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)*  \n\n***"
+      operationId: SimulateBondYield
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondYieldRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BondYield'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/yield/matrix:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Calculate bond yield matrix
+      description: "## Overview\nThis call calculates bond yield for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[][]`* -  vector of CPR vectors in decimal format  \n> **Cdr** *`double[][]`* - vector of CDR vectors in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Price** *`double`* - Price value  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n\n## Response\nThe response body in format of JSON array of arrays of objects. Each object contains the following: \n> **Yield** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)* - The CollateralCashflow field is not populated to limit the response size.\n\n***"
+      operationId: SimulateBondYieldMatrix
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondYieldMatrixRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BondYieldMatrix'
+              example:
+              - - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.0322372137542839
+                  Simulation:
+                    ProjectedLosses: 2.23254328255375E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 8.28903372267848
+                      PrincipalWindow: 65 - 66, 68 - 72, 74 - 78, 80
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.032300651672649394
+                  Simulation:
+                    ProjectedLosses: 1.4607018770366058E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 3.806252125980167
+                      PrincipalWindow: 30 - 35, 37 - 46, 48 - 57, 59
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.03237946741475817
+                  Simulation:
+                    ProjectedLosses: 1.0124939665313812E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 2.351767170817557
+                      PrincipalWindow: 19 - 19, 21 - 36, 38 - 40
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+              - - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.03222619364897561
+                  Simulation:
+                    ProjectedLosses: 4.3840302978832245E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 10.318454004860184
+                      PrincipalWindow: 93 - 93, 95 - 96, 98 - 99, 10
+                      WritedownPct: 3.7746894070864944E-18
+                      FirstLossPeriod: 0
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.03227968943899873
+                  Simulation:
+                    ProjectedLosses: 2.881358639113335E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 4.664442703395351
+                      PrincipalWindow: 36 - 40, 42 - 46, 48 - 51, 53
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.032351471216862215
+                  Simulation:
+                    ProjectedLosses: 2.00490040588052E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 2.6331583269148013
+                      PrincipalWindow: 21 - 27, 29 - 35, 37 - 44, 46
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+              - - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: -0.19423231697222954
+                  Simulation:
+                    ProjectedLosses: 8.455921151366156E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 7.139318483988547
+                      PrincipalWindow: 130 - 130
+                      WritedownPct: 0.9541133106667855
+                      FirstLossPeriod: 51
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.015046815668870117
+                  Simulation:
+                    ProjectedLosses: 5.607643223957239E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 10.355619119150212
+                      PrincipalWindow: 130 - 130
+                      WritedownPct: 0.18450066058023254
+                      FirstLossPeriod: 79
+                - Yield:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 0.03225260364276128
+                  Simulation:
+                    ProjectedLosses: 3.9315374043624866E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-2B
+                      Wal: 6.568882443615686
+                      PrincipalWindow: 59 - 60, 65 - 107
+                      WritedownPct: 7.863936264763531E-19
+                      FirstLossPeriod: 0
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/spread:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Simulate bond spread
+      description: "## Overview\nThis call calculates bond spread for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Price** *`double`* - Price value  \n> **ReferenceCurve** *`double[]`* - Reference Curve vector in decimal format  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n\n## Response\n\n> **Spread** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)*  \n\n***"
+      operationId: SimulateBondSpread
+      parameters:
+      - name: Content-Type
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondSpreadRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/SimulateBondSpread'
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /simulate/spread/matrix:
+    post:
+      tags:
+      - Bond Math Functions
+      summary: Calculate bond spread matrix
+      description: "## Overview\nThis call calculates bond spread for the specified deal, bond and settlement date. Applicable for STACR and CAS deals.\n\n# Request\nThe post body in format of JSON as follows:  \n\n> **DealName** *`string`* - Deal name  \n> **SettlementDate** *`int`* - Settlement date in “YYYYMMDD” format  \n> **BondName** *`string`* - Bond name  \n> **Cpr** *`double[]`* -  CPR vector in decimal format  \n> **Cdr** *`double[]`* - CDR vector in decimal format  \n> **LossSeverity** *`double[]`* - Loss severity vector in decimal format  \n> **Delinquency** *`double[]`* - Delinquency vector in decimal format  \n> **Libor** *`double[]`* - Libor vector in decimal format  \n> **Price** *`double`* - Price value  \n> **ReferenceCurve** *`double[]`* - Reference Curve vector in decimal format  \n> **UserCollateralCashflow** *[user collateral cashflow](#e833a1ef-0c28-4cba-bdc7-2c8f0b8b764b)* - Optional    \n> **EarlyRedemptionPct** *`double`* - Optional floating point fraction  \n> **EarlyRedemptionDate** *`int`* - Optional int value in “YYYYMMDD” format\n\n\n## Response\nThe response body in format of JSON array of arrays of objects. Each object contains the following: \n> **Spread** *[calculation result](#12090441-a54b-4b1e-83e1-305a1d6c8f09)*   \n> **Simulation** *[simulation result](#2a2ced3f-efd0-473e-b96b-0a229efa9817)* - The CollateralCashflow field is not populated to limit the response size.  \n\n***"
+      operationId: SimulateBondSpreadMatrix
+      parameters:
+      - name: Content-Type
+        in: header
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateBondSpreadMatrixRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: '#/components/schemas/BondSpreadMatrix'
+              example:
+              - - Spread:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 99.5707614839504
+                  Simulation:
+                    ProjectedLosses: 4.121998691568916E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-1
+                      Wal: 13.812532386759676
+                      PrincipalWindow: 1 - 5, 133 - 145, 283 - 293
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Spread:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 492.56215632843805
+                  Simulation:
+                    ProjectedLosses: 2.3501401868999636E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-1
+                      Wal: 3.395880201864328
+                      PrincipalWindow: 1 - 5, 61 - 63, 73 - 80
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+              - - Spread:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 51.39455130737697
+                  Simulation:
+                    ProjectedLosses: 6.009937438792543E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-1
+                      Wal: 20.63336356429334
+                      PrincipalWindow: 1 - 3, 282 - 307
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+                - Spread:
+                    IsSuccessful: true
+                    ErrorMessage: Success
+                    Value: 190.32415221747559
+                  Simulation:
+                    ProjectedLosses: 3.4663275256802803E8
+                    CollateralCashflow: []
+                    BondsCashflows:
+                    - BondName: M-1
+                      Wal: 7.8326575946843
+                      PrincipalWindow: 1 - 3, 121 - 123, 133 - 144
+                      WritedownPct: 0
+                      FirstLossPeriod: 0
+      deprecated: false
+      x-codegen-request-body-name: Body
+  /documentation/loan/{dealName}/{settlementDate}:
+    get:
+      tags:
+      - Utility Functions
+      summary: Get loan data in CSV file
+      description: "This call generates the URL to the CSV file that contains loan data.\r\r## Response\rThe URL to the CSV file with loan data.\r\r**NOTICE**: The URL is valid for 30 seconds only.\r\r***"
+      operationId: GetloandatainCSVfile
+      parameters:
+      - name: dealName
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: settlementDate
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json; charset=utf-8:
+              schema:
+                type: string
+              example: '"https://crt-loans-by-month.s3.us-east-2.amazonaws.com/201912/STACR%202018-DNA1.csv?X-Amz-Expires=30......cc3c06b52e9737ebe99369623d60a20272883e"'
+      deprecated: false
+  /scenarios:
+    get:
+      tags:
+      - Utility Functions
+      summary: Get scenarios
+      description: |
+        Lists all scenarios.
+      operationId: GetScenarios
+      parameters:
+      - name: scenarioName
+        in: query
+        description: Optional name of a scenario
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: dealName
+        in: query
+        description: Optional name of a deal to which scenarios are linked
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: vendor
+        in: query
+        description: Optional vendor name who releases the scenario
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scenario'
+      deprecated: false
+components:
+  schemas:
+    AuthToken:
+      title: Authentication Token Response
+      required:
+      - .expires
+      - .issued
+      - access_token
+      - expires_in
+      - roles
+      - token_type
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+          format: int32
+        roles:
+          type: string
+        ".issued":
+          type: string
+        ".expires":
+          type: string
+      example:
+        access_token: ExZTgtOGYyYy0wMmZkYjk1NzYyODYiLCJ1bmlxdWVfbmFtZSI6ImFkbWluIiwi....
+        token_type: bearer
+        expires_in: 86399
+        roles: '["AFT_User","Admin","User","DocReader","LDM_User"]'
+        ".issued": Wed, 22 Jan 2020 15:33:00 GMT
+        ".expires": Thu, 23 Jan 2020 15:33:00 GMT
+    AvailableDeal:
+      title: AvailableDeal
+      required:
+      - CurrentBalance
+      - DealFactor
+      - DealName
+      - FactorDate
+      - IssueDate
+      - MaturityDate
+      - OriginalBalance
+      type: object
+      properties:
+        DealName:
+          type: string
+        IssueDate:
+          type: integer
+          format: int32
+        OriginalBalance:
+          type: number
+          format: double
+        CurrentBalance:
+          type: number
+          format: double
+        MaturityDate:
+          type: integer
+          format: int32
+        FactorDate:
+          type: integer
+          format: int32
+        DealFactor:
+          type: number
+          format: double
+      example:
+        DealName: ACIS 2014-1
+        IssueDate: 20131112
+        OriginalBalance: 3.532731663256001E10
+        CurrentBalance: 1.8137608338509995E10
+        MaturityDate: 20231125
+        FactorDate: 20140401
+        DealFactor: 0.5134159643983026
+    Deal:
+      title: Deal
+      required:
+      - Bonds
+      - CollateralCurrentBalance
+      - CollateralLosses
+      - CollateralOriginalBalance
+      - DatesOfAvailableUpdates
+      - DealFactor
+      - DealName
+      - EarlyRedemptionDate
+      - EarlyRedemptionPct
+      - FactorDate
+      - FirstPaymentDate
+      - FirstProjectedDate
+      - IssueDate
+      - MaturityDate
+      - MonthsToMaturity
+      - ParentDealName
+      - SettlementDate
+      - Wac
+      - Wala
+      - Wam
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: integer
+          format: int32
+        IssueDate:
+          type: integer
+          format: int32
+        FactorDate:
+          type: integer
+          format: int32
+        FirstProjectedDate:
+          type: integer
+          format: int32
+        FirstPaymentDate:
+          type: integer
+          format: int32
+        MaturityDate:
+          type: integer
+          format: int32
+        MonthsToMaturity:
+          type: integer
+          format: int32
+        CollateralOriginalBalance:
+          type: number
+          format: double
+        CollateralCurrentBalance:
+          type: number
+          format: double
+        CollateralLosses:
+          type: number
+          format: double
+        DealFactor:
+          type: number
+          format: double
+        Wac:
+          type: number
+          format: double
+        Wam:
+          type: number
+          format: double
+        Wala:
+          type: number
+          format: double
+        EarlyRedemptionPct:
+          type: number
+          format: double
+        EarlyRedemptionDate:
+          type: integer
+          format: int32
+        DatesOfAvailableUpdates:
+          type: array
+          items:
+            type: integer
+            format: int32
+        Bonds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bond'
+        ParentDealName:
+          type: string
+    Bond:
+      title: Bond
+      required:
+      - BondName
+      - BondType
+      - Coupon
+      - CurrentBalance
+      - Factor
+      - FloaterFormula
+      - IsMACR
+      - OriginalBalance
+      - OriginalCoupon
+      type: object
+      properties:
+        BondName:
+          type: string
+        OriginalBalance:
+          type: number
+          format: double
+        CurrentBalance:
+          type: number
+          format: double
+        Factor:
+          type: number
+          format: double
+        OriginalCoupon:
+          type: number
+          format: double
+        Coupon:
+          type: number
+          format: double
+        FloaterFormula:
+          type: string
+        BondType:
+          type: string
+        IsMACR:
+          type: boolean
+      example:
+        BondName: M-1H
+        OriginalBalance: 37462332
+        CurrentBalance: 0
+        Factor: 0
+        OriginalCoupon: 0.0125
+        Coupon: 0
+        BondType: P&I
+        IsMACR: false
+    BaseSimulateRequest:
+      title: Base Simulate Request
+      required:
+      - DealName
+      - SettlementDate
+      - Cpr
+      - Cdr
+      - Delinquency
+      - LossSeverity
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        Cpr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Cdr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Delinquency:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        LossSeverity:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+    SimulateRequest:
+      title: Simulate Request
+      required:
+      - Libor
+      allOf:
+        - $ref: '#/components/schemas/BaseSimulateRequest'
+        - type: object
+          properties:
+            Libor:
+              $ref: '#/components/schemas/ArrayOfDoubles'
+      example:
+        DealName: STACR 2017-HQA1
+        SettlementDate: "20200325"
+        Cpr:
+        - 0.1
+        Cdr:
+        - 0.005
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0
+    Simulation:
+      title: Simulation
+      required:
+      - BondsCashflows
+      - CollateralCashflow
+      - ProjectedLosses
+      type: object
+      properties:
+        ProjectedLosses:
+          type: number
+          format: double
+        CollateralCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollateralCashflow'
+        BondsCashflows:
+          type: array
+          items:
+            $ref: '#/components/schemas/BondsCashflow'
+    CollateralCashflow:
+      title: CollateralCashflow
+      required:
+      - Balance
+      - CdrRate
+      - CprRate
+      - CumulativeDefaults
+      - CumulativeLosses
+      - Defaults
+      - DelinquencyRate
+      - Interest
+      - InterestRate
+      - LossSeverityRate
+      - Losses
+      - PassThru
+      - PassThruRate
+      - PaymentDate
+      - Period
+      - PrepaidPrincipal
+      - Recoveries
+      - ScheduledPrincipal
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        Balance:
+          type: number
+          format: double
+        Interest:
+          type: number
+          format: double
+        PassThru:
+          type: number
+          format: double
+        ScheduledPrincipal:
+          type: integer
+          format: int32
+        PrepaidPrincipal:
+          type: number
+          format: double
+        Defaults:
+          type: number
+          format: double
+        Losses:
+          type: number
+          format: double
+        Recoveries:
+          type: number
+          format: double
+        CumulativeLosses:
+          type: number
+          format: double
+        CumulativeDefaults:
+          type: number
+          format: double
+        InterestRate:
+          type: number
+          format: double
+        PassThruRate:
+          type: number
+          format: double
+        CprRate:
+          type: number
+          format: double
+        CdrRate:
+          type: number
+          format: double
+        LossSeverityRate:
+          type: number
+          format: double
+        DelinquencyRate:
+          type: number
+          format: double
+      example:
+        Period: 0
+        PaymentDate: "20180921"
+        Balance: 2.96145706412E10
+        Interest: 0
+        PassThru: 0
+        ScheduledPrincipal: 0
+        PrepaidPrincipal: 0
+        Defaults: 0
+        Losses: 0
+        Recoveries: 0
+        CumulativeLosses: 0
+        CumulativeDefaults: 0
+        InterestRate: 0
+        PassThruRate: 0
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    BondsCashflow:
+      title: BondsCashflow
+      required:
+      - BondCashflow
+      - BondName
+      - FirstLossPeriod
+      - PrincipalWindow
+      - Wal
+      - WritedownPct
+      type: object
+      properties:
+        BondName:
+          type: string
+        Wal:
+          type: number
+          format: double
+        PrincipalWindow:
+          type: string
+        WritedownPct:
+          type: number
+          format: double
+        FirstLossPeriod:
+          type: integer
+          format: int32
+        BondCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/BondCashflowItem'
+    BondCashflowItem:
+      title: BondCashflowItem
+      required:
+      - ActualWriteDown
+      - Balance
+      - Cash
+      - CdrRate
+      - CprRate
+      - DelinquencyRate
+      - Interest
+      - LossSeverityRate
+      - PaymentDate
+      - Period
+      - Principal
+      - Rate
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        Balance:
+          type: number
+          format: double
+        Principal:
+          type: number
+          format: double
+        Interest:
+          type: number
+          format: double
+        Rate:
+          type: number
+          format: double
+        Cash:
+          type: number
+          format: double
+        ActualWriteDown:
+          type: number
+          format: double
+        CprRate:
+          type: number
+          format: double
+        CdrRate:
+          type: number
+          format: double
+        LossSeverityRate:
+          type: number
+          format: double
+        DelinquencyRate:
+          type: number
+          format: double
+      example:
+        Period: 0
+        PaymentDate: "20180921"
+        Balance: 28429987815
+        Principal: 0
+        Interest: 0
+        Rate: 0
+        Cash: 0
+        ActualWriteDown: 0
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    SimulateAcisRequest:
+      title: Simulate Acis Request
+      allOf:
+        - $ref: '#/components/schemas/BaseSimulateRequest'
+        - type: object
+          required:
+            - AnnualPremium
+            - Cancellation
+          properties:
+            OwnedFaceAmt:
+              type: number
+              format: double
+            Margin:
+              type: number
+              format: double
+            InterestRate:
+              type: number
+              format: double
+            AnnualPremium:
+              type: number
+              format: double
+            Cancellation:
+              type: boolean
+      example:
+        DealName: ACIS 2018-DNA1
+        BondName: M-1H
+        SettlementDate: "20180921"
+        Cpr:
+        - 0.35
+        Cdr:
+        - 0.0125
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        OwnedFaceAmt: 100000
+        Margin: 0.2
+        InterestRate: 0.05
+    SimulateCirtRequest:
+      title: Simulate Acis/Cirt Request
+      allOf:
+        - $ref: '#/components/schemas/SimulateAcisRequest'
+        - type: object
+          required:
+            - Coverage
+            - Retention
+            - MarginTarget
+            - IsPremiumCapture
+            - RegReset
+          properties:
+            CancellationDate:
+              type: integer
+              format: int32
+            Coverage:
+              type: number
+              format: double
+            Retention:
+              type: number
+              format: double
+            MarginTarget:
+              type: number
+              format: double
+            IsPremiumCapture:
+              type: boolean
+            RegReset:
+              type: integer
+              format: int32
+      example:
+        DealName: ACIS 2018-DNA1
+        BondName: M-1H
+        SettlementDate: "20180921"
+        Cpr:
+        - 0.35
+        Cdr:
+        - 0.0125
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        OwnedFaceAmt: 100000
+        Margin: 0.2
+        InterestRate: 0.05    
+    AcisSimulation:
+      title: ACIS Simulation
+      required:
+      - AcisCashflow
+      - AcisCashflowTotals
+      - BondName
+      - FirstLossPeriod
+      - InsurerPaidLossesPct
+      - LineMetrics
+      - ReductionInLiabilityWindow
+      - Wal
+      - Yield
+      type: object
+      properties:
+        LineMetrics:
+          $ref: '#/components/schemas/LineMetrics'
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        Wal:
+          type: number
+          format: double
+        ReductionInLiabilityWindow:
+          type: string
+        InsurerPaidLossesPct:
+          type: number
+          format: double
+        FirstLossPeriod:
+          type: integer
+          format: int32
+        BondName:
+          type: string
+        AcisCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcisCashflow'
+        AcisCashflowTotals:
+          $ref: '#/components/schemas/AcisCashflowTotals'
+    LineMetrics:
+      title: LineMetrics
+      required:
+      - LossOnLine
+      - RateOnLine
+      - ReturnOnLine
+      type: object
+      properties:
+        RateOnLine:
+          type: number
+          format: double
+        LossOnLine:
+          type: number
+          format: double
+        ReturnOnLine:
+          type: number
+          format: double
+      example:
+        RateOnLine: 0.004668522719687694
+        LossOnLine: 0
+        ReturnOnLine: 0.004668522719687694
+    Yield:
+      title: Yield
+      required:
+      - ErrorMessage
+      - IsSuccessful
+      - Value
+      type: object
+      properties:
+        IsSuccessful:
+          type: boolean
+        ErrorMessage:
+          type: string
+        Value:
+          type: number
+          format: double
+      example:
+        IsSuccessful: true
+        ErrorMessage: Success
+        Value: 0.09430096113574615
+    AcisCashflow:
+      title: AcisCashflow
+      required:
+      - CdrRate
+      - CollateralAccountChange
+      - CollateralAccountInterest
+      - CollateralBalance
+      - CollateralLosses
+      - CollateralTrustAccount
+      - CprRate
+      - DelinquencyRate
+      - InsurancePremium
+      - InsurerPaidLosses
+      - LossSeverityRate
+      - NetInsuranceCashflow
+      - PaymentDate
+      - Period
+      - ReductionInLiability
+      - RemainingLiability
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        RemainingLiability:
+          type: number
+          format: double
+        ReductionInLiability:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        CollateralTrustAccount:
+          type: number
+          format: double
+        CollateralAccountChange:
+          type: number
+          format: double
+        CollateralAccountInterest:
+          type: number
+          format: double
+        NetInsuranceCashflow:
+          type: number
+          format: double
+        CollateralBalance:
+          type: number
+          format: double
+        CollateralLosses:
+          type: number
+          format: double
+        CprRate:
+          type: number
+          format: double
+        CdrRate:
+          type: number
+          format: double
+        LossSeverityRate:
+          type: number
+          format: double
+        DelinquencyRate:
+          type: number
+          format: double
+      example:
+        Period: 0
+        PaymentDate: "20180921"
+        RemainingLiability: 95578.068571614
+        ReductionInLiability: 0
+        InsurerPaidLosses: 0
+        InsurancePremium: 0
+        CollateralTrustAccount: 19115.6137143228
+        CollateralAccountChange: -19115.6137143228
+        CollateralAccountInterest: 0
+        NetInsuranceCashflow: -19115.6137143228
+        CollateralBalance: 3.27626152447E10
+        CollateralLosses: 0
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    AcisCashflowTotals:
+      title: AcisCashflowTotals
+      required:
+      - CollateralLosses
+      - InsurancePremium
+      - InsurerPaidLosses
+      - NetInsuranceCashflow
+      - ReductionInLiability
+      type: object
+      properties:
+        CollateralLosses:
+          type: number
+          format: double
+        ReductionInLiability:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        NetInsuranceCashflow:
+          type: number
+          format: double
+      example:
+        CollateralLosses: 5.809646498969267E7
+        ReductionInLiability: 95578.06857161399
+        InsurerPaidLosses: 0
+        InsurancePremium: 446.2083846304483
+        NetInsuranceCashflow: 971.1594253721557
+    CirtSimulation:
+      title: CIRT Simulation
+      required:
+      - CirtCashflow
+      - CirtCashflowTotals
+      - FirstLossPeriod
+      - LineMetrics
+      - LossWindow
+      - PolicyInformation
+      - Wal
+      - WritedownPct
+      - Yield
+      type: object
+      properties:
+        LineMetrics:
+          $ref: '#/components/schemas/LineMetrics'
+        PolicyInformation:
+          $ref: '#/components/schemas/PolicyInformation'
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        Wal:
+          type: number
+          format: double
+        LossWindow:
+          type: string
+        WritedownPct:
+          type: number
+          format: double
+        FirstLossPeriod:
+          type: integer
+          format: int32
+        CirtCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/CirtCashflow'
+        CirtCashflowTotals:
+          $ref: '#/components/schemas/CirtCashflowTotals'
+    PolicyInformation:
+      title: PolicyInformation
+      required:
+      - InitialCollateral
+      - InitialCollateralPct
+      - InitialPremium
+      - InitialPremiumPct
+      - LiabilityLimit
+      - LiabilityLimitPct
+      - Ownership
+      - OwnershipPct
+      - RetentionLimit
+      - RetentionLimitPct
+      type: object
+      properties:
+        LiabilityLimit:
+          type: integer
+          format: int32
+        LiabilityLimitPct:
+          type: number
+          format: double
+        RetentionLimit:
+          type: number
+          format: double
+        RetentionLimitPct:
+          type: number
+          format: double
+        InitialCollateral:
+          type: number
+          format: double
+        InitialCollateralPct:
+          type: number
+          format: double
+        InitialPremium:
+          type: number
+          format: double
+        InitialPremiumPct:
+          type: number
+          format: double
+        Ownership:
+          type: integer
+          format: int32
+        OwnershipPct:
+          type: number
+          format: double
+      example:
+        LiabilityLimit: 57501384
+        LiabilityLimitPct: 0.025
+        RetentionLimit: 1.1500276713E7
+        RetentionLimitPct: 0.005
+        InitialCollateral: 4.02509688E7
+        InitialCollateralPct: 0.7
+        InitialPremium: 248405.9770008
+        InitialPremiumPct: 1.0800000000000001E-4
+        Ownership: 10000000
+        OwnershipPct: 0.17390885756767177
+    CirtCashflow:
+      title: CirtCashflow
+      required:
+      - CdrRate
+      - CollateralAccountChange
+      - CollateralAccountInterest
+      - CollateralBalance
+      - CollateralLosses
+      - CollateralTrustAccount
+      - CprRate
+      - DelinquencyRate
+      - InsurancePremium
+      - InsurerPaidLosses
+      - LossSeverityRate
+      - NetInsuranceCashflow
+      - PaymentDate
+      - Period
+      - ReductionInLiability
+      - RemainingLiability
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        RemainingLiability:
+          type: number
+          format: double
+        ReductionInLiability:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        CollateralTrustAccount:
+          type: number
+          format: double
+        CollateralAccountChange:
+          type: number
+          format: double
+        CollateralAccountInterest:
+          type: number
+          format: double
+        NetInsuranceCashflow:
+          type: number
+          format: double
+        CollateralBalance:
+          type: number
+          format: double
+        CollateralLosses:
+          type: number
+          format: double
+        CprRate:
+          type: number
+          format: double
+        CdrRate:
+          type: number
+          format: double
+        LossSeverityRate:
+          type: number
+          format: double
+        DelinquencyRate:
+          type: number
+          format: double
+      example:
+        Period: 0
+        PaymentDate: "20170201"
+        RemainingLiability: 10000000
+        ReductionInLiability: 0
+        InsurerPaidLosses: 0
+        InsurancePremium: 0
+        CollateralTrustAccount: 7000000
+        CollateralAccountChange: -7000000
+        CollateralAccountInterest: 0
+        NetInsuranceCashflow: -7000000
+        CollateralBalance: 2.3000553426E9
+        CollateralLosses: 0
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    CirtCashflowTotals:
+      title: CirtCashflowTotals
+      required:
+      - CollateralLosses
+      - InsurancePremium
+      - InsurerPaidLosses
+      - NetInsuranceCashflow
+      - ReductionInLiability
+      type: object
+      properties:
+        CollateralLosses:
+          type: number
+          format: double
+        ReductionInLiability:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        NetInsuranceCashflow:
+          type: number
+          format: double
+      example:
+        CollateralLosses: 3.7608225033855796E7
+        ReductionInLiability: 4540403.465915843
+        InsurerPaidLosses: 4540403.465915846
+        InsurancePremium: 3374976.950771157
+        NetInsuranceCashflow: 1749742.637482944
+    SimulatePortfolioRequest:
+      title: Simulate Portfolio Request
+      allOf:
+        - $ref: '#/components/schemas/SimulateAcisRequest'
+        - type: object
+          required:
+            - CancellationDate
+          properties:
+            CancellationDate:
+              type: integer
+              format: int32
+            Price:
+              type: number
+              format: double
+            Ballance:
+              type: number
+              format: double
+    PortfolioSimulation:
+      title: Portfolio Simulation
+      required:
+      - AcisPortfolio
+      - CirtPortfolio
+      - TotalOwnedFaceAmt
+      type: object
+      properties:
+        AcisPortfolio:
+          $ref: '#/components/schemas/AcisPortfolio'
+        CirtPortfolio:
+          $ref: '#/components/schemas/CirtPortfolio'
+        TotalOwnedFaceAmt:
+          type: number
+          format: double
+    AcisPortfolio:
+      title: AcisPortfolio
+      required:
+      - LineMetrics
+      - PortfolioCashflow
+      - PortfolioEntries
+      - TotalCharacteristics
+      - TotalCollateralAccountChange
+      - TotalInsurancePremium
+      - TotalMargin
+      - TotalNetInsuranceCashflow
+      - TotalOwnedFaceAmt
+      - TotalPrincipal
+      - TotalWriteDown
+      - Yield
+      type: object
+      properties:
+        TotalPrincipal:
+          type: number
+          format: double
+        TotalWriteDown:
+          type: number
+          format: double
+        TotalInsurancePremium:
+          type: number
+          format: double
+        TotalCollateralAccountChange:
+          type: number
+          format: double
+        TotalNetInsuranceCashflow:
+          type: number
+          format: double
+        TotalOwnedFaceAmt:
+          type: number
+          format: double
+        TotalMargin:
+          type: number
+          format: double
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        LineMetrics:
+          $ref: '#/components/schemas/LineMetrics'
+        TotalCharacteristics:
+          $ref: '#/components/schemas/TotalCharacteristics'
+        PortfolioEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioEntry'
+        PortfolioCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioCashflow'
+    TotalCharacteristics:
+      title: TotalCharacteristics
+      required:
+      - FirstLossPeriod
+      - PrincipalWindow
+      - Wal
+      - WritedownPct
+      type: object
+      properties:
+        Wal:
+          type: number
+          format: double
+        PrincipalWindow:
+          type: string
+        WritedownPct:
+          type: number
+          format: double
+        FirstLossPeriod:
+          type: integer
+          format: int32
+      example:
+        Wal: 2.4506986142954994
+        PrincipalWindow: 2 - 4, 7 - 74
+        WritedownPct: 8.778240302390364E-19
+        FirstLossPeriod: 0
+    PortfolioEntry:
+      title: PortfolioEntry
+      required:
+      - BondName
+      - Characteristics
+      - DealName
+      - LineMetrics
+      - Yield
+      type: object
+      properties:
+        DealName:
+          type: string
+        BondName:
+          type: string
+        Characteristics:
+          $ref: '#/components/schemas/Characteristics'
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        LineMetrics:
+          $ref: '#/components/schemas/LineMetrics'
+      example:
+        DealName: ACIS 2018-DNA1
+        BondName: M-2H
+        Characteristics:
+          Wal: 3.1640648402701217
+          PrincipalWindow: 9 - 74
+          WritedownPct: 1.7556480604780735E-18
+          FirstLossPeriod: 0
+        Yield:
+          IsSuccessful: true
+          ErrorMessage: Success
+          Value: 0.17077693501378288
+        LineMetrics:
+          RateOnLine: 0.08685475068729331
+          LossOnLine: 1.7556480604780727E-18
+          ReturnOnLine: 0.08685475068729331
+    Characteristics:
+      title: Characteristics
+      required:
+      - FirstLossPeriod
+      - PrincipalWindow
+      - Wal
+      - WritedownPct
+      type: object
+      properties:
+        Wal:
+          type: number
+          format: double
+        PrincipalWindow:
+          type: string
+        WritedownPct:
+          type: number
+          format: double
+        FirstLossPeriod:
+          type: integer
+          format: int32
+      example:
+        Wal: 3.1640648402701217
+        PrincipalWindow: 9 - 74
+        WritedownPct: 1.7556480604780735E-18
+        FirstLossPeriod: 0
+    PortfolioCashflow:
+      title: PortfolioCashflow
+      required:
+      - Balance
+      - CdrRate
+      - CollateralAccountChange
+      - CprRate
+      - DelinquencyRate
+      - InsurancePremium
+      - Interest
+      - LossSeverityRate
+      - NetInsuranceCashflow
+      - PaymentDate
+      - Period
+      - Principal
+      - RequiredCollateral
+      - WriteDown
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        Balance:
+          type: number
+          format: double
+        Principal:
+          type: number
+          format: double
+        WriteDown:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        RequiredCollateral:
+          type: number
+          format: double
+        CollateralAccountChange:
+          type: number
+          format: double
+        Interest:
+          type: number
+          format: double
+        NetInsuranceCashflow:
+          type: number
+          format: double
+        CprRate:
+          type: number
+          format: double
+        CdrRate:
+          type: number
+          format: double
+        LossSeverityRate:
+          type: number
+          format: double
+        DelinquencyRate:
+          type: number
+          format: double
+      example:
+        Period: 0
+        PaymentDate: "20190114"
+        Balance: 200000
+        Principal: 0
+        WriteDown: 0
+        InsurancePremium: 0
+        RequiredCollateral: 50000
+        CollateralAccountChange: -50000
+        Interest: 0
+        NetInsuranceCashflow: -50000
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    CirtPortfolio:
+      title: CirtPortfolio
+      required:
+      - ContractCashflowTotals
+      - InsurerOwnedCashflowTotals
+      - LineMetrics
+      - PortfolioContractCashflow
+      - PortfolioEntries
+      - PortfolioInsurerCashflow
+      - TotalCharacteristics
+      - TotalMargin
+      - TotalOwnedFaceAmt
+      - Yield
+      type: object
+      properties:
+        TotalOwnedFaceAmt:
+          type: number
+          format: double
+        TotalMargin:
+          type: number
+          format: double
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        LineMetrics:
+          $ref: '#/components/schemas/LineMetrics'
+        TotalCharacteristics:
+          $ref: '#/components/schemas/TotalCharacteristics'
+        PortfolioEntries:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioEntry'
+        PortfolioContractCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioContractCashflow'
+        PortfolioInsurerCashflow:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortfolioInsurerCashflow'
+        ContractCashflowTotals:
+          $ref: '#/components/schemas/ContractCashflowTotals'
+        InsurerOwnedCashflowTotals:
+          $ref: '#/components/schemas/InsurerOwnedCashflowTotals'
+    PortfolioContractCashflow:
+      title: PortfolioContractCashflow
+      required:
+      - CdrRate
+      - CollateralTrustAccount
+      - CprRate
+      - DelinquencyRate
+      - InsurancePremium
+      - InsurerPaidLosses
+      - Interest
+      - LossSeverityRate
+      - NetInsuranceCashflow
+      - PaymentDate
+      - Period
+      - PoolBalance
+      - PoolLosses
+      - PremiumCapture
+      - RemainingLiability
+      - RequiredCollateral
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        PoolBalance:
+          type: number
+          format: double
+        PoolLosses:
+          type: integer
+          format: int32
+        RemainingLiability:
+          type: integer
+          format: int32
+        InsurerPaidLosses:
+          type: integer
+          format: int32
+        RequiredCollateral:
+          type: number
+          format: double
+        InsurancePremium:
+          type: integer
+          format: int32
+        PremiumCapture:
+          type: integer
+          format: int32
+        CollateralTrustAccount:
+          type: number
+          format: double
+        Interest:
+          type: integer
+          format: int32
+        NetInsuranceCashflow:
+          type: number
+          format: double
+        CprRate:
+          type: integer
+          format: int32
+        CdrRate:
+          type: integer
+          format: int32
+        LossSeverityRate:
+          type: integer
+          format: int32
+        DelinquencyRate:
+          type: integer
+          format: int32
+      example:
+        Period: 0
+        PaymentDate: "20170201"
+        PoolBalance: 2.0390753911289997E10
+        PoolLosses: 0
+        RemainingLiability: 509768848
+        InsurerPaidLosses: 0
+        RequiredCollateral: 1.3070446160000001E8
+        InsurancePremium: 0
+        PremiumCapture: 0
+        CollateralTrustAccount: 1.3070446160000001E8
+        Interest: 0
+        NetInsuranceCashflow: -1.3070446160000001E8
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    PortfolioInsurerCashflow:
+      title: PortfolioInsurerCashflow
+      required:
+      - CdrRate
+      - CollateralTrustAccount
+      - CprRate
+      - DelinquencyRate
+      - InsurancePremium
+      - InsurerPaidLosses
+      - Interest
+      - LossSeverityRate
+      - NetInsuranceCashflow
+      - PaymentDate
+      - Period
+      - PoolBalance
+      - PoolLosses
+      - PremiumCapture
+      - RemainingLiability
+      - RequiredCollateral
+      type: object
+      properties:
+        Period:
+          type: integer
+          format: int32
+        PaymentDate:
+          type: string
+        PoolBalance:
+          type: number
+          format: double
+        PoolLosses:
+          type: integer
+          format: int32
+        RemainingLiability:
+          type: integer
+          format: int32
+        InsurerPaidLosses:
+          type: integer
+          format: int32
+        RequiredCollateral:
+          type: integer
+          format: int32
+        InsurancePremium:
+          type: integer
+          format: int32
+        PremiumCapture:
+          type: integer
+          format: int32
+        CollateralTrustAccount:
+          type: integer
+          format: int32
+        Interest:
+          type: integer
+          format: int32
+        NetInsuranceCashflow:
+          type: integer
+          format: int32
+        CprRate:
+          type: integer
+          format: int32
+        CdrRate:
+          type: integer
+          format: int32
+        LossSeverityRate:
+          type: integer
+          format: int32
+        DelinquencyRate:
+          type: integer
+          format: int32
+      example:
+        Period: 0
+        PaymentDate: "20170201"
+        PoolBalance: 2.0390753911289997E10
+        PoolLosses: 0
+        RemainingLiability: 20000000
+        InsurerPaidLosses: 0
+        RequiredCollateral: 9000000
+        InsurancePremium: 0
+        PremiumCapture: 0
+        CollateralTrustAccount: 9000000
+        Interest: 0
+        NetInsuranceCashflow: -9000000
+        CprRate: 0
+        CdrRate: 0
+        LossSeverityRate: 0
+        DelinquencyRate: 0
+    ContractCashflowTotals:
+      title: ContractCashflowTotals
+      required:
+      - InsurancePremium
+      - InsurerPaidLosses
+      - NetInsuranceCashflow
+      - PoolLosses
+      - PremiumCapture
+      type: object
+      properties:
+        PoolLosses:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        PremiumCapture:
+          type: integer
+          format: int32
+        NetInsuranceCashflow:
+          type: number
+          format: double
+      example:
+        PoolLosses: 3.335691569377679E8
+        InsurerPaidLosses: 2.3161538738131794E8
+        InsurancePremium: 1.721282524272841E8
+        PremiumCapture: 0
+        NetInsuranceCashflow: -5059953.934163719
+    InsurerOwnedCashflowTotals:
+      title: InsurerOwnedCashflowTotals
+      required:
+      - InsurancePremium
+      - InsurerPaidLosses
+      - NetInsuranceCashflow
+      - PoolLosses
+      - PremiumCapture
+      type: object
+      properties:
+        PoolLosses:
+          type: number
+          format: double
+        InsurerPaidLosses:
+          type: number
+          format: double
+        InsurancePremium:
+          type: number
+          format: double
+        PremiumCapture:
+          type: integer
+          format: int32
+        NetInsuranceCashflow:
+          type: number
+          format: double
+      example:
+        PoolLosses: 3.335691569377679E8
+        InsurerPaidLosses: 9084339.420160433
+        InsurancePremium: 6751776.7433722
+        PremiumCapture: 0
+        NetInsuranceCashflow: 1415400.2965518748
+    SimulateBondPriceRequest:
+      title: Simulate Bond Price Request
+      required:
+      - ReferenceCurve
+      - Yield
+      - Libor
+      allOf:
+        - $ref: '#/components/schemas/BaseSimulateRequest'
+        - type: object
+          properties:
+            ReferenceCurve:
+              $ref: '#/components/schemas/ArrayOfDoubles'
+            Yield:
+              $ref: '#/components/schemas/ArrayOfDoubles'
+            Libor:
+              $ref: '#/components/schemas/ArrayOfDoubles'
+            Spread:
+              type: number
+              format: double
+      example:
+        DealName: STACR 2018-DNA2
+        SettlementDate: "20200301"
+        BondName: M-2B
+        Cpr:
+        - 0.1
+        Cdr:
+        - 0.005
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.01
+        Yield:
+        - 0.05
+    BondPriceSimulation:
+      title: Simulation Price
+      required:
+      - Price
+      - Simulation
+      type: object
+      properties:
+        Price:
+          $ref: '#/components/schemas/PysPrice'
+        Simulation:
+          $ref: '#/components/schemas/Simulation'
+    PysPrice:
+      title: PysPrice
+      required:
+      - ErrorMessage
+      - IsSuccessful
+      - Value
+      type: object
+      properties:
+        IsSuccessful:
+          type: boolean
+        ErrorMessage:
+          type: string
+        Value:
+          type: number
+          format: double
+      example:
+        IsSuccessful: true
+        ErrorMessage: Success
+        Value: 97.08434015215886
+    SimulateBondPriceMatrixRequest:
+      title: Simulate Bond Price Matrix Request
+      required:
+      - BondName
+      - Cdr
+      - Cpr
+      - DealName
+      - Delinquency
+      - Libor
+      - LossSeverity
+      - SettlementDate
+      - Yield
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        BondName:
+          type: string
+        Cpr:
+          $ref: '#/components/schemas/ArrayOfArrayOfDoubles'
+        Cdr:
+          $ref: '#/components/schemas/ArrayOfArrayOfDoubles'
+        LossSeverity:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Delinquency:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Libor:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Yield:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+      example:
+        DealName: STACR 2018-DNA2
+        SettlementDate: "20200301"
+        BondName: M-2B
+        Cpr:
+        - - 0.1
+        - - 0.2
+        Cdr:
+        - - 0.005
+        - - 0.01
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.01
+        Yield:
+        - 0.05
+    BondPriceMatrix:
+      title: BondPriceMatrix
+      type: array
+      items:
+        $ref: '#/components/schemas/BondPriceMatrixRow'
+    BondPriceMatrixRow:
+      title: Bond Price Matrix Row
+      type: array
+      items:
+        $ref: '#/components/schemas/BondPriceSimulation'
+    SimulateBondYieldRequest:
+      title: Simulate Bond Yield Request
+      required:
+      - BondName
+      - Cdr
+      - Cpr
+      - DealName
+      - Delinquency
+      - Libor
+      - LossSeverity
+      - Price
+      - SettlementDate
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        BondName:
+          type: string
+        Cpr:
+          type: array
+          items:
+            type: number
+            format: double
+        Cdr:
+          type: array
+          items:
+            type: number
+            format: double
+        LossSeverity:
+          type: array
+          items:
+            type: number
+            format: double
+        Delinquency:
+          type: array
+          items:
+            type: integer
+            format: int32
+        Libor:
+          type: array
+          items:
+            type: number
+            format: double
+        Price:
+          type: integer
+          format: int32
+      example:
+        DealName: STACR 2018-DNA2
+        SettlementDate: "20200301"
+        BondName: M-2B
+        Cpr:
+        - 0.1
+        Cdr:
+        - 0.005
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.01
+        Price: 100
+    BondYield:
+      title: Bond Yield
+      required:
+      - Simulation
+      - Yield
+      type: object
+      properties:
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        Simulation:
+          $ref: '#/components/schemas/Simulation'
+    SimulateBondYieldMatrixRequest:
+      title: SimulateBondYieldMatrixRequest
+      required:
+      - BondName
+      - Cdr
+      - Cpr
+      - DealName
+      - Delinquency
+      - Libor
+      - LossSeverity
+      - Price
+      - SettlementDate
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        BondName:
+          type: string
+        Cpr:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+        Cdr:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: double
+        LossSeverity:
+          type: array
+          items:
+            type: number
+            format: double
+        Delinquency:
+          type: array
+          items:
+            type: integer
+            format: int32
+        Libor:
+          type: array
+          items:
+            type: number
+            format: double
+        Price:
+          type: integer
+          format: int32
+      example:
+        DealName: STACR 2018-DNA2
+        SettlementDate: "20200301"
+        BondName: M-2B
+        Cpr:
+        - - 0.1
+        - - 0.2
+        - - 0.3
+        Cdr:
+        - - 0.005
+        - - 0.01
+        - - 0.02
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.01
+        Price: 100
+    BondYieldMatrix:
+      title: Bond Yield Matrix
+      type: array
+      items:
+        $ref: '#/components/schemas/BondYieldMatrixRow'
+    BondYieldMatrixRow:
+      title: Bond Yield Matrix Row
+      required:
+      - Simulation
+      - Yield
+      type: object
+      properties:
+        Yield:
+          $ref: '#/components/schemas/Yield'
+        Simulation:
+          $ref: '#/components/schemas/Simulation'
+      example:
+        Yield:
+          IsSuccessful: true
+          ErrorMessage: Success
+          Value: 0.0322372137542839
+        Simulation:
+          ProjectedLosses: 2.23254328255375E8
+          CollateralCashflow: []
+          BondsCashflows:
+          - BondName: M-2B
+            Wal: 8.28903372267848
+            PrincipalWindow: 65 - 66, 68 - 72, 74 - 78, 80
+            WritedownPct: 0
+            FirstLossPeriod: 0
+    SimulateBondSpreadRequest:
+      title: SimulateBondSpreadRequest
+      required:
+      - BondName
+      - Cdr
+      - Cpr
+      - DealName
+      - Delinquency
+      - Libor
+      - LossSeverity
+      - Price
+      - ReferenceCurve
+      - SettlementDate
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        BondName:
+          type: string
+        Cpr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Cdr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        LossSeverity:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Delinquency:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Libor:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Price:
+          type: number
+          format: double
+        ReferenceCurve:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+      example:
+        DealName: STACR 2018-DNA3
+        SettlementDate: "20180921"
+        BondName: M-1
+        Cpr:
+        - 0.35
+        Cdr:
+        - 0.0125
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.02
+        Price: 85.5
+        ReferenceCurve:
+        - 0.02
+        - 0.03
+        - 0.034
+    SimulateBondSpread:
+      title: Simulate Bond Spread
+      required:
+      - Simulation
+      - Spread
+      type: object
+      properties:
+        Simulation:
+          $ref: '#/components/schemas/Simulation'
+        Spread:
+          $ref: '#/components/schemas/Spread'
+    Spread:
+      title: Spread
+      required:
+      - ErrorMessage
+      - IsSuccessful
+      - Value
+      type: object
+      properties:
+        IsSuccessful:
+          type: boolean
+        ErrorMessage:
+          type: string
+        Value:
+          type: number
+          format: double
+      example:
+        IsSuccessful: false
+        ErrorMessage: Bond paid off
+        Value: 0
+    SimulateBondSpreadMatrixRequest:
+      title: Simulate Bond Spread Matrix Request
+      required:
+      - BondName
+      - Cdr
+      - Cpr
+      - DealName
+      - Delinquency
+      - Libor
+      - LossSeverity
+      - Price
+      - ReferenceCurve
+      - SettlementDate
+      type: object
+      properties:
+        DealName:
+          type: string
+        SettlementDate:
+          type: string
+        BondName:
+          type: string
+        Cpr:
+          $ref: '#/components/schemas/ArrayOfArrayOfDoubles'
+        Cdr:
+          $ref: '#/components/schemas/ArrayOfArrayOfDoubles'
+        LossSeverity:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Delinquency:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Libor:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Price:
+          type: number
+          format: double
+        ReferenceCurve:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+      example:
+        DealName: STACR 2018-DNA3
+        SettlementDate: "20180921"
+        BondName: M-1
+        Cpr:
+        - - 0.1
+        - - 0.2
+        Cdr:
+        - - 0.01
+        - - 0.015
+        LossSeverity:
+        - 0.2
+        Delinquency:
+        - 0
+        Libor:
+        - 0.02
+        Price: 85.5
+        ReferenceCurve:
+        - 0.02
+        - 0.03
+        - 0.034
+    BondSpreadMatrix:
+      title: Bond Spread Matrix
+      type: array
+      items:
+        $ref: '#/components/schemas/BondSpreadMatrixRow'
+    BondSpreadMatrixRow:
+      title: Bond Spread Matrix Row
+      required:
+      - Simulation
+      - Spread
+      type: object
+      properties:
+        Spread:
+          $ref: '#/components/schemas/Spread'
+        Simulation:
+          $ref: '#/components/schemas/Simulation'
+      example:
+        Spread:
+          IsSuccessful: true
+          ErrorMessage: Success
+          Value: 99.5707614839504
+        Simulation:
+          ProjectedLosses: 4.121998691568916E8
+          CollateralCashflow: []
+          BondsCashflows:
+          - BondName: M-1
+            Wal: 13.812532386759676
+            PrincipalWindow: 1 - 5, 133 - 145, 283 - 293
+            WritedownPct: 0
+            FirstLossPeriod: 0
+    DealNameBondName:
+      title: DealNameBondName
+      required:
+      - BondName
+      - DealName
+      type: object
+      properties:
+        DealName:
+          type: string
+        BondName:
+          type: string
+      example:
+        DealName: STACR 2013-DN01
+        BondName: M-2
+    Scenario:
+      title: Simulation Scenario
+      type: object
+      properties:
+        Id:
+          type: string
+          format: uuid
+        Owner:
+          type: string
+          format: uuid
+        Owned:
+          type: boolean
+        Shared:
+          type: boolean
+        Vendor:
+          type: string
+        DealName:
+          type: string
+        ScenarioName:
+          type: string
+        Cpr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Cdr:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        LossSeverity:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+        Delinquency:
+          $ref: '#/components/schemas/ArrayOfDoubles'
+    ArrayOfDoubles:
+      title: Array of double items
+      type: array
+      items:
+        type: number
+        format: double
+    ArrayOfArrayOfDoubles:
+      title: Array of double items
+      type: array
+      items:
+        type: array
+        items:
+          type: number
+          format: double
+    OAuthTokenRequest:
+      required:
+      - grant_type
+      - password
+      - username
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        grant_type:
+          type: string
+          description: '*`string`* -  grant_type with value “password” - this informs the server that it should use user credentials for authentication. In the future we might include different types of authentication.'
+  securitySchemes:
+    auth:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://chasenenterprises.com/auth
+          scopes: {}
